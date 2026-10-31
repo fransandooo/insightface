@@ -8,7 +8,7 @@ implemented. A failing test means the privacy issue is still open.
 | File | Issue | What it checks |
 |---|---|---|
 | `test_p1_template_protection.py` | P1: plaintext, linkable templates | embeddings are not stored in clear text and a stolen BLOB cannot be matched with the public model |
-| `test_p2_erasure.py` | P2: incomplete erasure | deleting an employee removes their samples, crop file and every trace in the SQLite file |
+| `test_p2_erasure.py` | P2: incomplete erasure | deleting an employee removes their samples, crop file, faces in reviewed media and every trace in the SQLite file |
 | `test_p3_access_log.py` | P3: function creep through the access log | access events expire after a retention period and never contain biometrics |
 | `test_p4_bystanders.py` | P4: non-enrolled people | results for unmatched people carry no face or body template |
 

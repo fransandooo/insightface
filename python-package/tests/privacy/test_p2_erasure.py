@@ -8,6 +8,8 @@ in the database and the face crop stays on disk. Even with
 ``delete_samples=True`` SQLite keeps the deleted bytes in free pages unless
 ``secure_delete`` or ``VACUUM`` is used, so the template remains recoverable
 from the file or its backups.
+Faces of the employee found in reviewed footage (``media_faces``: embedding
+and thumbnail) are not deleted either; only their person label is cleared.
 
 GDPR: Art. 17 (right to erasure), Art. 5(1)(e) (storage limitation).
 """
@@ -63,6 +65,26 @@ def test_deleted_template_cannot_be_recovered_from_the_database_file(
     assert employee_embedding.tobytes() not in raw_bytes(db_path), (
         "P2 OPEN: the deleted template is still present in the SQLite file's "
         "free pages (no secure_delete / VACUUM); forensic recovery is possible."
+    )
+
+
+def test_deleting_an_employee_removes_their_faces_from_reviewed_media(
+    gallery, employee_embedding, face_crop, query_one
+):
+    """Faces found in reviewed footage (Album / Batch) are biometric data too."""
+    storage, db_path = gallery
+    person_id, _ = _enroll(storage, employee_embedding, face_crop)
+    media_id = storage.add_media_item(str(face_crop.parent / "door_cam_frame_0412.jpg"), "image")
+    media_face_id = storage.add_media_face(
+        media_id, employee_embedding, thumbnail=b"face thumbnail", assigned_person_id=person_id
+    )
+
+    storage.delete_person(person_id, delete_samples=True)  # best case available today
+
+    remaining = query_one(db_path, "SELECT COUNT(*) FROM media_faces WHERE id = ?", (media_face_id,))
+    assert remaining == 0, (
+        "P2 OPEN: the deleted employee's face from reviewed footage (embedding and "
+        "thumbnail in media_faces) is kept; only the person label is removed."
     )
 
 
